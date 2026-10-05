@@ -1,15 +1,13 @@
-/*******************************/
-[[4/10/2026 | 8:43:45]]
-[[author : mohammed abd al marof gobara]]
-[[tag : experiment 23002]]
-[[name : simple binary loader]]
-/*******************************/
-tools like readelf, objdump and so on, depend on binary loader for static analysis and this couldn't be done with a specific library called "binary file descriptor", or simply bfd. the bfd is a framework which exposes interfaces which allows to read and parse common binary formats, like ELF and PE, and it's compiled for the widely adopted architectures like x86 and x86-64. this advantage allows to base your binary loader on this library without the need to implement a format-specific support.
-the libbfd library is part of GNU project and is used by many application in the binutils suit, It provides
-generic abstractions for all common components used in binary formats,
-such as headers describing the binary’s target and properties, lists of sec
-tions, sets of relocations, symbol tables, and so on. On Ubuntu, libbfd is part
-of the binutils-dev package.
-/******************************/
-the program i am about to implement is gonna be written in C++, the entry point is main.cpp where the "main" function is gonna be implemented. we need to implement an wrapper functions that wraps/hides the libbfd functions and data structures, these wrapper functions are to reside in a seperate header file called "inc/loader.h" inside a directory called "inc".
-/*****************************/ 
+## binary loader
+### description:
+in binary analysis, in order to inspect any executable file, object file or static/dynamic library, we need to load them and parse them in order to be printed, this is where the binary loader comes to play this role, relying on libbfd library, which is part of the well known GNU project, the program can open the binary, tell which architecture it belongs to, it's format (whether it's PE or ELF), tell it's type (an object file, a shared library, or an executable), among other properties, and when we are done from parsing the program just prints file property, its sections, it dynamic and static symbol table and other thing about it.
+### view:
+#### main.cpp 
+the main function resides in `main.cpp`, which calls two function we implement them as an abstraction of the `libbfd` library function, the reason for this is to avoid format specific support and want both support all formats, like PE and ELF.
+#### inc
+if you noticed in `main.cpp`, we included a user-implemented header called `inc/loader.h`, inside that directory, there is a header file and a C++ file, inside the header file, we defined three structure:
+- `Binary` class defined as an abstraction of the loaded binary file after it has been parsed, which includes: the name of the file, its size, its entry vma, its type, it's table of symbols of type `vector<Symbol>` and its table of sections of the type `vector<Section>`.
+- `Symbol` class defined as an abstraction of the individual symbol in the symbols table, and defines its property: the name of the symbol, it's type, and it's address.
+- `Section` class defined as an abstraction of the individual section in the Section table and defines the sections property: the name of it, its binary, its type, it's vma, its address, its size and it bytes.
+
+after that comes the signature of the two most important functions, `load_binary` and `unload_binary`, these two functions are implemented to load, parse and then unload when we are done with printing it's content, both of them are defined in loader.cc which includes the `bfd.h` header so that we can use it functions the retrieve the binary file's property to be parsed.
